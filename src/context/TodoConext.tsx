@@ -3,20 +3,33 @@ import { AsyncType, NormalDataType, TodoListIDType, ByIdType, TodoListType } fro
 import { header, sleep } from '../variable/variable'
 import produce from 'immer'
 
+export const FETCH_TODOS = 'FETCH_TODOS'
+export const FETCH_TODOS_SUCCESS = 'FETCH_TODOS_SUCCESS'
+export const FETCH_TODOS_ERROR = 'FETCH_TODOS_ERROR'
+export const FETCH_TODO = 'FETCH_TODO'
+export const FETCH_TODO_SUCCESS = 'FETCH_TODO_SUCCESS'
+export const FETCH_TODO_ERROR = 'FETCH_TODO_ERROR'
+export const ADD_TODO_SUCCESS = 'ADD_TODO_SUCCESS'
+export const ADD_TODO_ERROR = 'ADD_TODO_ERROR'
+export const REMOVE_TODO_SUCCESS = 'REMOVE_TODO_SUCCESS'
+export const REMOVE_TODO_ERROR = 'REMOVE_TODO_ERROR'
+export const UPDATE_TODO_SUCCESS = 'UPDATE_TODO_SUCCESS'
+export const UPDATE_TODO_ERROR = 'UPDATE_TODO_ERROR'
+
 // useReducer로 state관리
 
 type ActionType =
-  | {type: 'FETCH_TODOS_SUCCESS', payload: TodoListIDType[]}
-  | {type: 'FETCH_TODOS_ERROR', error: object}
-  | {type: 'FETCH_TODO'}
-  | {type: 'FETCH_TODO_SUCCESS', payload: TodoListIDType}
-  | {type: 'FETCH_TODO_ERROR', error: object}
-  | {type: 'ADD_TODO', payload: TodoListIDType}
-  | {type: 'ADD_TODO_ERROR', error: object}
-  | {type: 'UPDATE_TODO', payload: TodoListIDType}
-  | {type: 'UPDATE_TODO_ERROR', error: object}
-  | {type: 'REMOVE_TODO', id: string}
-  | {type: 'REMOVE_TODO_ERROR', error: object}
+  | {type: typeof FETCH_TODOS_SUCCESS, payload: TodoListIDType[]}
+  | {type: typeof FETCH_TODOS_ERROR, error: Error}
+  | {type: typeof FETCH_TODO}
+  | {type: typeof FETCH_TODO_SUCCESS, payload: TodoListIDType}
+  | {type: typeof FETCH_TODO_ERROR, error: Error}
+  | {type: typeof ADD_TODO_SUCCESS, payload: TodoListIDType}
+  | {type: typeof ADD_TODO_ERROR, error: Error}
+  | {type: typeof UPDATE_TODO_SUCCESS, payload: TodoListIDType}
+  | {type: typeof UPDATE_TODO_ERROR, error: Error}
+  | {type: typeof REMOVE_TODO_SUCCESS, id: string}
+  | {type: typeof REMOVE_TODO_ERROR, error: Error}
 
 const initialData: NormalDataType = {
   byId: {},
@@ -76,77 +89,77 @@ const removeData = (data: NormalDataType, targetId: string) => {
 
 const reducer = (state: AsyncType, action: ActionType):AsyncType => {
   switch(action.type) {
-    case 'FETCH_TODOS_SUCCESS':
+    case FETCH_TODOS_SUCCESS:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = action.payload ? getList(action.payload) : initialData
         draft.selectedItem = null
         draft.error = null
       })
-    case 'FETCH_TODOS_ERROR':
+    case FETCH_TODOS_ERROR:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = initialData
         draft.selectedItem = null
         draft.error = action.error
       })
-    case 'FETCH_TODO':
+    case FETCH_TODO:
       return produce(state, draft => {
         draft.isLoading = true
         // draft.data = initialData
         draft.selectedItem = null
         draft.error = null
       })
-    case 'FETCH_TODO_SUCCESS':
+    case FETCH_TODO_SUCCESS:
       return produce(state, draft => {
         draft.isLoading = false
         // draft.data = initialData
         draft.selectedItem = action.payload
         draft.error = null
       })
-    case 'FETCH_TODO_ERROR':
+    case FETCH_TODO_ERROR:
       return produce(state, draft => {
         draft.isLoading = false
         // draft.data = initialData
         draft.selectedItem = null
         draft.error = action.error
       })
-    case 'ADD_TODO':
+    case ADD_TODO_SUCCESS:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = addData(state.data, action.payload)
         draft.selectedItem = null
         draft.error = null
       })
-    case 'ADD_TODO_ERROR':
+    case ADD_TODO_ERROR:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = initialData
         draft.selectedItem = null
         draft.error = action.error
       })
-    case 'UPDATE_TODO':
+    case UPDATE_TODO_SUCCESS:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = updateData(state.data, action.payload)
         draft.selectedItem = null
         draft.error = null
       })
-    case 'UPDATE_TODO_ERROR':
+    case UPDATE_TODO_ERROR:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = initialData
         draft.selectedItem = null
         draft.error = action.error
       })
-    case 'REMOVE_TODO':
+    case REMOVE_TODO_SUCCESS:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = removeData(state.data, action.id)
         draft.selectedItem = null
         draft.error = null
       })
-    case 'REMOVE_TODO_ERROR':
+    case REMOVE_TODO_ERROR:
       return produce(state, draft => {
         draft.isLoading = false
         draft.data = initialData
@@ -190,26 +203,26 @@ export const UseTodoDispatch = () => {
 
 // api 호출
 
-export const getTodos = async (dispatch: Dispatch<ActionType>) => {
+export const getTodos = async (dispatch: Dispatch<ActionType>):Promise<void> => {
   try {
     const response = await fetch('/api/todos', header)
     const result = await response.json()
-    dispatch({type: 'FETCH_TODOS_SUCCESS', payload: result})
-  } catch(e) {
-    dispatch({type: 'FETCH_TODOS_ERROR', error: e})
+    dispatch({type: FETCH_TODOS_SUCCESS, payload: result})
+  } catch(error: any) {
+    dispatch({type: FETCH_TODOS_ERROR, error})
   }
 }
 
 export const getTodo = async (dispatch: Dispatch<ActionType>, id: string) => {
-  dispatch({type: 'FETCH_TODO'})
+  dispatch({type: FETCH_TODO})
   await sleep(500)
   try {
     const response = await fetch(`/api/todos/${id}`, header)
     const result = await response.json()
-    dispatch({type: 'FETCH_TODO_SUCCESS', payload: result})
+    dispatch({type: FETCH_TODO_SUCCESS, payload: result})
   }
-  catch(e) {
-    dispatch({type: 'FETCH_TODO_ERROR', error: e})
+  catch(error: any) {
+    dispatch({type: FETCH_TODO_ERROR, error})
   }
 }
 
@@ -220,9 +233,9 @@ export const postTodo = async (dispatch: Dispatch<ActionType>, newItem: TodoList
       body: JSON.stringify(newItem)
     })
     const result = await response.json()
-    dispatch({type: 'ADD_TODO', payload: result})
-  } catch(e) {
-    dispatch({type: 'ADD_TODO_ERROR', error: e})
+    dispatch({type: ADD_TODO_SUCCESS, payload: result})
+  } catch(error: any) {
+    dispatch({type: ADD_TODO_ERROR, error})
   }
 }
 
@@ -234,9 +247,9 @@ export const putTodo = async (dispatch: Dispatch<ActionType>, item: TodoListIDTy
       body: JSON.stringify(item)
     })
     const result = await response.json()
-    dispatch({type: 'UPDATE_TODO', payload: result})
-  } catch(e) {
-    dispatch({type: 'UPDATE_TODO_ERROR', error: e})
+    dispatch({type: UPDATE_TODO_SUCCESS, payload: result})
+  } catch(error: any) {
+    dispatch({type: UPDATE_TODO_ERROR, error})
   }
 }
 
@@ -245,8 +258,8 @@ export const deleteTodo = async (dispatch: Dispatch<ActionType>, id: string) => 
     await fetch(`/api/todos/${id}`, {
       method: 'DELETE',
     })
-    dispatch({type: 'REMOVE_TODO', id})
-  } catch(e) {
-    dispatch({type: 'REMOVE_TODO_ERROR', error: e})
+    dispatch({type: REMOVE_TODO_SUCCESS, id})
+  } catch(error: any) {
+    dispatch({type: REMOVE_TODO_ERROR, error})
   }
 }
